@@ -1,0 +1,35 @@
+flowchart TD
+    A[Audio Files in S3 Bucket] --> B[S3 Event Notification/EventBridge]
+    B --> C[AWS Step Functions Orchestrator]
+
+    subgraph Transcription Workflow
+      C --> D[Lambda: Start Transcription Job]
+      D --> E[Amazon Transcribe]
+      E --> F[Lambda: Poll Transcription Status]
+      F --> G[Lambda: Retrieve Transcript]
+    end
+
+    subgraph Processing Workflow
+      G --> H[Lambda: Chunk Transcript]
+      H --> I[Lambda/SageMaker: Generate Embeddings]
+      I --> J[Lambda: Store in Vector DB]
+      J --> K[(Vector Database: OpenSearch / Pinecone)]
+    end
+
+    subgraph Query Endpoint
+      M[API Gateway Endpoint] --> N[Lambda: Handle User Query]
+      N --> O[Vector DB Search & LLM Integration]
+    end
+
+    %% CloudWatch Monitoring & Security integrated across services
+    A --- P[CloudWatch Logging & Metrics]
+    D --- P
+    F --- P
+    G --- P
+    H --- P
+    I --- P
+    J --- P
+    N --- P
+
+    %% Connect Step Functions with Query Endpoint (for overall system visibility)
+    C --> M
