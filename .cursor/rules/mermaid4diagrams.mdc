@@ -1,0 +1,108 @@
+---
+description: This rule provides guidelines for using Mermaid diagrams to visualize code structure and flow.
+globs: *architecture.md
+alwaysApply: false
+---
+# Mermaid Diagram Guidelines for Code Documentation
+
+This rule provides guidelines for using Mermaid diagrams to visualize code structure and flow.
+
+## Code to Diagram Patterns
+
+### 1. Class Relationships
+Use class diagrams to show relationships between classes and components:
+
+```mermaid
+classDiagram
+    class VideoProcessor {
+        +processVideo()
+        +extractFrames()
+        +applyFilters()
+    }
+    class Pipeline {
+        +execute()
+        +addStep()
+    }
+    class VideoOutput {
+        +save()
+        +stream()
+    }
+    VideoProcessor --> Pipeline
+    Pipeline --> VideoOutput
+```
+
+### 2. Process Flow
+Use flowcharts to document process flows and decision points:
+
+```mermaid
+graph TD
+    A[Video Input] -->|Raw Video| B(Process Video)
+    B --> C{Check Format}
+    C -->|MP4| D[Direct Process]
+    C -->|Other| E[Convert Format]
+    E --> D
+    D --> F[Generate Output]
+```
+
+### 3. Sequence of Operations
+Use sequence diagrams for temporal operations and API calls:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant VideoProcessor
+    participant Storage
+    
+    Client->>VideoProcessor: Upload Video
+    VideoProcessor->>VideoProcessor: Process Frames
+    VideoProcessor->>Storage: Save Results
+    Storage-->>Client: Return URL
+```
+
+## Usage Guidelines
+
+1. **When to Use Diagrams:**
+   - For complex workflows
+   - To show component relationships
+   - To document API interactions
+   - For system architecture overview
+
+2. **Naming Conventions:**
+   - Use PascalCase for class names
+   - Use camelCase for methods
+   - Keep names consistent with code
+
+3. **Best Practices:**
+   - Keep diagrams focused and simple
+   - Update diagrams when code changes
+   - Include relevant documentation links
+   - Use consistent styling
+
+## File Organization
+
+Place diagram definitions in markdown files:
+- `docs/architecture.md` - System architecture diagrams
+- `docs/workflows.md` - Process flow diagrams
+- `docs/api-flows.md` - API interaction diagrams
+
+## Example Usage
+
+To add a new diagram:
+
+1. Create or open relevant markdown file
+2. Add diagram using Mermaid syntax:
+
+```mermaid
+graph LR
+    A[Component] --> B[Process]
+    B --> C[Output]
+```
+
+3. Commit with documentation updates
+
+## References
+
+- [Mermaid Documentation](mdc:https:/mermaid.js.org)
+- [Class Diagram Syntax](mdc:https:/mermaid.js.org/syntax/classDiagram.html)
+- [Flowchart Syntax](mdc:https:/mermaid.js.org/syntax/flowchart.html)
+- [Sequence Diagram Syntax](mdc:https:/mermaid.js.org/syntax/sequenceDiagram.html) 
