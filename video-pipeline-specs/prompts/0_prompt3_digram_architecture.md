@@ -1,0 +1,1 @@
+Using `video-pipeline-specs/prompts/0_prompt1_architecture.md` and `video-pipeline-specs/prompts/0_prompt2_architecture.md` as input, generate a markdown file that documents the architecture of the audio pipeline. Place the generated markdown file in `video-pipeline-specs/documentation/architecture.mermaid`.
