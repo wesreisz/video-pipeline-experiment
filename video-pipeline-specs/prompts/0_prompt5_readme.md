@@ -1,0 +1,1 @@
+Given all the files in this project can you create a readme.md file for the root of the directory @0_prompt1_architecture.md, @0_prompt2_architecture.md, @0_prompt3_diagram_architecture.md
