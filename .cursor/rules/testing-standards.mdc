@@ -1,0 +1,321 @@
+---
+description: "Python testing standards for the video pipeline project, including unit testing, integration testing, and best practices"
+globs: ["*.py", "tests/**/*.py", "pytest.ini", ".pre-commit-config.yaml"]
+alwaysApply: true
+---
+
+# Python Testing Standards for Video Pipeline
+
+This rule defines the Python-specific testing requirements and standards for the video pipeline project, ensuring code quality and reliability through comprehensive testing practices.
+
+## Testing Architecture Overview
+
+```mermaid
+graph TB
+    subgraph Unit Tests
+        UT1[Component Tests]
+        UT2[Function Tests]
+        UT3[Service Tests]
+    end
+    
+    subgraph Integration Tests
+        IT1[API Tests]
+        IT2[Pipeline Tests]
+        IT3[Service Integration]
+    end
+    
+    subgraph Mocks
+        M1[AWS Services]
+        M2[External APIs]
+        M3[Databases]
+    end
+    
+    Unit Tests --> Integration Tests
+    Integration Tests --> Mocks
+```
+
+## Unit Testing Standards
+
+### 1. Coverage Requirements
+- Minimum 80% code coverage for all new code
+- 100% coverage for critical pipeline components
+- Test all error conditions and edge cases
+- Use pytest-cov for coverage reporting
+
+### 2. Component Testing
+
+```python
+# Example Component Test Structure
+import pytest
+from video_pipeline.processor import VideoProcessor
+from video_pipeline.models import VideoInput
+from unittest.mock import Mock, patch
+
+class TestVideoProcessor:
+    @pytest.fixture
+    def processor(self):
+        mock_config = Mock()
+        mock_logger = Mock()
+        return VideoProcessor(
+            config=mock_config,
+            logger=mock_logger
+        )
+    
+    def test_process_video_success(self, processor):
+        # Arrange
+        input_video = VideoInput(path="test.mp4", format="mp4")
+        
+        # Act
+        result = processor.process(input_video)
+        
+        # Assert
+        assert result.status == "success"
+        assert len(result.frames) == expected_frame_count
+    
+    def test_process_video_error(self, processor):
+        # Test error scenarios
+        with pytest.raises(ProcessingError):
+            processor.process(invalid_input)
+```
+
+### 3. Function Testing
+- Use pytest parametrize for multiple test cases
+- Test input validation
+- Test return values
+- Test error handling
+- Test edge cases
+- Test performance constraints
+
+```python
+@pytest.mark.parametrize("input_format,expected_output", [
+    ("mp4", "processed_mp4"),
+    ("avi", "processed_avi"),
+    ("mov", "processed_mov")
+])
+def test_format_processing(input_format, expected_output):
+    assert process_format(input_format) == expected_output
+```
+
+### 4. Service Testing
+- Use pytest-mock for mocking
+- Test service initialization
+- Test service shutdown
+- Test resource cleanup
+- Test configuration validation
+
+## Integration Testing Standards
+
+### 1. Component Integration
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Processor
+    participant Storage
+    
+    Client->>API: Request
+    API->>Processor: Process
+    Processor->>Storage: Store
+    Storage-->>Processor: Confirm
+    Processor-->>API: Result
+    API-->>Client: Response
+```
+
+### 2. Mock Standards
+
+```python
+# Example Mock Implementation using pytest-mock
+def test_s3_integration(mocker):
+    # Mock S3 client
+    mock_s3 = mocker.patch('boto3.client')
+    mock_s3.return_value.upload_file.return_value = True
+    mock_s3.return_value.get_object.return_value = {
+        'Body': mocker.Mock(read=lambda: b'test data')
+    }
+    
+    # Test code that uses S3
+    storage = S3Storage()
+    result = storage.upload('test.mp4')
+    assert result.success == True
+```
+
+### 3. API Testing
+- Use pytest-fastapi for FastAPI testing
+- Use pytest-flask for Flask testing
+- Test all endpoints
+- Validate request/response formats
+- Test authentication/authorization
+- Test rate limiting
+- Test error responses
+
+```python
+# Example FastAPI Test
+from fastapi.testclient import TestClient
+
+def test_upload_endpoint(test_client: TestClient):
+    response = test_client.post(
+        "/upload",
+        files={"video": ("test.mp4", open("test.mp4", "rb"))}
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+```
+
+### 4. Pipeline Integration
+- Test end-to-end flows using pytest fixtures
+- Test pipeline stages
+- Test stage transitions
+- Test error recovery
+- Test parallel processing
+
+## Test Environment Standards
+
+### 1. Required Python Packages
+```
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-asyncio==0.21.1
+pytest-env==1.0.1
+moto==4.2.5  # For AWS mocking
+responses==0.23.1  # For HTTP mocking
+```
+
+### 2. Configuration Standards
+
+```python
+# pytest.ini configuration
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = --cov=video_pipeline --cov-report=html --cov-report=term-missing
+
+# Environment variables for testing
+env =
+    ENVIRONMENT=test
+    AWS_DEFAULT_REGION=us-west-2
+```
+
+## Test Data Management
+
+### 1. Test Data Standards
+- Use pytest fixtures for test data
+- Maintain seed data in tests/data
+- Clean up test data in fixture teardown
+- Version test datasets
+- Document data dependencies
+
+```python
+@pytest.fixture
+def sample_video_data():
+    # Setup test data
+    video_path = "tests/data/sample.mp4"
+    yield video_path
+    # Cleanup test data
+    if os.path.exists(video_path):
+        os.remove(video_path)
+```
+
+### 2. Mock Data Standards
+- Use factory_boy for test data generation
+- Version mock responses
+- Document mock behaviors
+- Maintain mock consistency
+
+## Testing Best Practices
+
+### 1. Code Organization
+```
+tests/
+├── unit/
+│   ├── test_processor.py
+│   ├── test_storage.py
+│   └── test_api.py
+├── integration/
+│   ├── test_pipeline.py
+│   └── test_services.py
+├── conftest.py
+└── data/
+    └── samples/
+```
+
+### 2. Async Testing
+```python
+@pytest.mark.asyncio
+async def test_async_processing():
+    processor = AsyncVideoProcessor()
+    result = await processor.process_video("test.mp4")
+    assert result.status == "complete"
+```
+
+### 3. Error Testing
+```python
+def test_error_handling():
+    with pytest.raises(VideoProcessingError) as exc_info:
+        process_invalid_video()
+    assert "Invalid video format" in str(exc_info.value)
+```
+
+## Performance Testing
+
+### 1. Load Testing
+- Use locust for load testing
+- Define performance baselines
+- Test scaling behavior
+- Monitor resource usage
+- Test concurrent processing
+
+### 2. Stress Testing
+- Use pytest-timeout for timeout testing
+- Test system limits
+- Test recovery behavior
+- Test degraded performance
+- Test resource exhaustion
+
+## Continuous Testing
+
+### 1. Pre-commit Hooks
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+```
+
+### 2. CI/CD Pipeline
+- Run tests with pytest
+- Generate coverage reports
+- Update coverage badges
+- Notify on failures
+
+## Documentation
+
+### 1. Test Documentation
+- Use doctest for example documentation
+- Document test scenarios
+- Document test data
+- Document mock behavior
+- Document test patterns
+
+### 2. Coverage Reports
+- Use pytest-cov HTML reports
+- Track coverage trends
+- Identify uncovered code
+- Report on critical paths
+
+## References
+
+- [pytest Documentation](https://docs.pytest.org/)
+- [pytest-cov Documentation](https://pytest-cov.readthedocs.io/)
+- [moto Documentation](https://github.com/getmoto/moto)
+- [factory_boy Documentation](https://factoryboy.readthedocs.io/)
+- [locust Documentation](https://locust.io/)

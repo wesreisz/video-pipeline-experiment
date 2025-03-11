@@ -1,0 +1,180 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Terraform Standards and Best Practices
+Description: Standards and best practices for Terraform implementation in the Video Pipeline project
+
+This document outlines the standards and best practices for using Terraform in the Video Pipeline project. Following these guidelines will ensure consistency, maintainability, and reliability of our infrastructure code.
+
+## File Organization
+
+```
+infra/
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── prod/
+│   └── prod/
+├── modules/
+│   ├── s3/
+│   ├── lambda/
+│   ├── step_functions/
+│   └── vector_db/
+└── terraform_standards.md
+```
+
+- Organize resources by logical components (modules)
+- Separate environment-specific configurations
+- Use consistent file naming across all modules
+
+## Naming Conventions
+
+### Resource Naming
+
+- Use snake_case for all resource names
+- Prefix resources with purpose or component
+- Include environment in resource names where appropriate
+
+Examples:
+```hcl
+resource "aws_s3_bucket" "video_pipeline_input" { ... }
+resource "aws_lambda_function" "video_processor" { ... }
+```
+
+### Variable Naming
+
+- Use descriptive names that indicate purpose
+- For module inputs, use consistent naming across modules
+- Prefix environment-specific variables with `env_`
+
+Example:
+```hcl
+variable "env_name" { ... }
+variable "s3_retention_days" { ... }
+```
+
+## Module Structure
+
+Each module should include:
+
+1. `main.tf` - Primary resource definitions
+2. `variables.tf` - Input variables
+3. `outputs.tf` - Output values
+4. `README.md` - Documentation
+
+## Tagging Strategy
+
+All resources should have these minimum tags:
+
+```hcl
+tags = {
+  Environment = var.environment
+  Project     = "VideoPipeline"
+  ManagedBy   = "Terraform"
+  Component   = "ComponentName"
+}
+```
+
+## State Management
+
+- Use remote state with S3 backend
+- Enable versioning on state bucket
+- Use state locking with DynamoDB
+- Never commit .tfstate files to version control
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "video-pipeline-tf-state"
+    key            = "environments/dev/terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
+```
+
+## Security Practices
+
+- Store sensitive values in AWS Secrets Manager, not in code
+- Use IAM roles with least privilege
+- Enable encryption for all applicable resources
+- Use security groups to restrict access
+- Regularly audit IAM permissions
+
+## Code Quality
+
+- Run `terraform fmt` before committing code
+- Run `terraform validate` to check for errors
+- Use consistent indentation (2 spaces)
+- Use comments to explain complex configurations
+- Keep resource blocks concise and focused
+
+## Variable Definition Standards
+
+All variables should include:
+
+```hcl
+variable "example_var" {
+  description = "Detailed description of the variable's purpose"
+  type        = string  # Always specify type
+  default     = "value" # Optional, provide when it makes sense
+}
+```
+
+## Version Pinning
+
+- Pin provider versions to patch level
+- Pin module versions when using external modules
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16.0"
+    }
+  }
+  required_version = ">= 1.2.0"
+}
+```
+
+## Documentation
+
+- Document purpose of each module
+- Document expected inputs and outputs
+- Include examples of module usage
+- Document any non-obvious design decisions
+
+## CI/CD Integration
+
+- Automate `terraform plan` in pull requests
+- Run `terraform fmt` check in CI
+- Consider automated security scanning
+- Use separate service accounts for CI/CD
+
+## Change Management
+
+- Make small, incremental changes
+- Always run `terraform plan` before applying
+- Review plan output carefully
+- Document significant changes in commit messages
+- Use descriptive feature branches
+
+## Testing
+
+- Test modules independently before integration
+- Validate outputs against expected values
+- Consider using Terratest for infrastructure testing
+
+## Cost Management
+
+- Tag resources for cost allocation
+- Consider using cost estimation tools
+- Review resource sizing regularly
+- Use auto-scaling where appropriate
+- Clean up unused resources 
