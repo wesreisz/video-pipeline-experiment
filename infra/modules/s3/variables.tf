@@ -39,4 +39,34 @@ variable "transition_glacier_days" {
     condition     = var.transition_glacier_days >= 90
     error_message = "Glacier transition must be at least 90 days."
   }
+}
+
+variable "lambda_function_arn" {
+  description = "ARN of the Lambda function to trigger on S3 events"
+  type        = string
+  default     = ""
+}
+
+variable "notification_filter_prefix" {
+  description = "Prefix filter for S3 notifications"
+  type        = string
+  default     = ""
+}
+
+variable "notification_filter_suffix" {
+  description = "Suffix filter for S3 notifications"
+  type        = string
+  default     = ""
+}
+
+variable "enable_lambda_notification" {
+  description = "Enable S3 event notifications to Lambda"
+  type        = bool
+  default     = false
+}
+
+variable "lambda_permission_depends_on" {
+  description = "Resource that the S3 notification should depend on (typically the Lambda permission)"
+  type        = any
+  default     = null
 } 

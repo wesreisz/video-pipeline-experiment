@@ -69,4 +69,20 @@ resource "aws_s3_bucket_lifecycle_configuration" "input_bucket_lifecycle" {
       storage_class = "GLACIER"
     }
   }
+}
+
+# S3 event notification for Lambda
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  count = var.enable_lambda_notification ? 1 : 0
+  
+  bucket = aws_s3_bucket.video_pipeline_input.id
+
+  lambda_function {
+    lambda_function_arn = var.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = var.notification_filter_prefix
+    filter_suffix       = var.notification_filter_suffix
+  }
+  
+  depends_on = [var.lambda_permission_depends_on]
 } 
