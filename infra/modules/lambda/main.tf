@@ -80,6 +80,33 @@ resource "aws_iam_role_policy" "lambda_s3_policy" {
   })
 }
 
+# Transcribe access policy for Lambda
+resource "aws_iam_role_policy" "lambda_transcribe_policy" {
+  name   = "${var.function_name}-transcribe-policy"
+  role   = aws_iam_role.lambda_execution_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "transcribe:StartTranscriptionJob",
+          "transcribe:GetTranscriptionJob",
+          "transcribe:ListTranscriptionJobs"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Action = [
+          "s3:PutObject"
+        ]
+        Effect   = "Allow"
+        Resource = concat(var.s3_bucket_arns, ["${var.s3_bucket_arns[0]}/transcripts/*"])
+      }
+    ]
+  })
+}
+
 # Lambda permission for S3 bucket to invoke function
 resource "aws_lambda_permission" "allow_s3_bucket" {
   count         = length(var.s3_bucket_arns) > 0 ? 1 : 0

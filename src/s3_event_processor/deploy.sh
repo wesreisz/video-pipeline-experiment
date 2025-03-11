@@ -14,9 +14,20 @@ mkdir -p "${DEPLOY_DIR}"
 # Clean up any existing deployment package
 rm -f "${ZIPFILE}"
 
+# Create a temporary directory for dependencies
+TEMP_DIR=$(mktemp -d)
+pip install -r "${SCRIPT_DIR}/requirements.txt" --target "${TEMP_DIR}" --no-cache-dir
+
 # Create a fresh deployment package
+cd "${TEMP_DIR}"
+zip -r "${ZIPFILE}" .
+
+# Add the Lambda function code
 cd "${SCRIPT_DIR}"
-zip -r "${ZIPFILE}" ./*.py
+zip -g "${ZIPFILE}" ./*.py
+
+# Clean up
+rm -rf "${TEMP_DIR}"
 
 echo "Lambda package created at ${ZIPFILE}"
 echo "Done." 

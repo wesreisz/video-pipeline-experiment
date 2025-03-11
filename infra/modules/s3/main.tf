@@ -85,4 +85,12 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
   }
   
   depends_on = [var.lambda_permission_depends_on]
+}
+
+# Create transcripts folder for transcription output
+resource "aws_s3_object" "transcripts_folder" {
+  bucket       = aws_s3_bucket.video_pipeline_input.id
+  key          = "transcripts/"
+  content_type = "application/x-directory"
+  source       = "/dev/null"
 } 
