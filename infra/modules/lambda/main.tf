@@ -72,6 +72,8 @@ resource "aws_iam_role_policy" "lambda_s3_policy" {
         Action = [
           "s3:GetObject",
           "s3:ListBucket",
+          "s3:CopyObject",
+          "s3:DeleteObject"
         ]
         Effect   = "Allow"
         Resource = var.s3_bucket_arns
@@ -102,6 +104,16 @@ resource "aws_iam_role_policy" "lambda_transcribe_policy" {
         ]
         Effect   = "Allow"
         Resource = concat(var.s3_bucket_arns, ["${var.s3_bucket_arns[0]}/transcripts/*"])
+      },
+      {
+        Action = [
+          "events:PutRule",
+          "events:PutTargets",
+          "events:DescribeRule",
+          "events:ListRules"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
       }
     ]
   })
@@ -115,4 +127,34 @@ resource "aws_lambda_permission" "allow_s3_bucket" {
   function_name = aws_lambda_function.function.function_name
   principal     = "s3.amazonaws.com"
   source_arn    = var.s3_trigger_arn
+}
+
+# EventBridge rule for Transcribe job completion
+resource "aws_cloudwatch_event_rule" "transcribe_job_state_change" {
+  name        = "${var.function_name}-transcribe-job-completion"
+  description = "Capture Transcribe job completion events"
+  
+  event_pattern = jsonencode({
+    source      = ["aws.transcribe"],
+    "detail-type" = ["Transcribe Job State Change"],
+    detail = {
+      TranscriptionJobStatus = ["COMPLETED", "FAILED"]
+    }
+  })
+}
+
+# Target the Lambda function with the EventBridge rule
+resource "aws_cloudwatch_event_target" "invoke_lambda" {
+  rule      = aws_cloudwatch_event_rule.transcribe_job_state_change.name
+  target_id = "${var.function_name}-target"
+  arn       = aws_lambda_function.function.arn
+}
+
+# Permission for EventBridge to invoke Lambda
+resource "aws_lambda_permission" "allow_eventbridge" {
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.transcribe_job_state_change.arn
 } 
