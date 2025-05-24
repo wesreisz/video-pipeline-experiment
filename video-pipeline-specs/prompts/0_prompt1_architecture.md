@@ -1,4 +1,4 @@
-#Text Processing and Embedding Endpoint Prompt
+# Text Processing and Embedding Endpoint Prompt
 
 I need a detailed design for a system that processes approximately 90 recorded audio files from a software conference. The solution should meet the following requirements and incorporate AWS managed services wherever possible:
 
